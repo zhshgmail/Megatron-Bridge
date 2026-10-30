@@ -1086,17 +1086,22 @@ class AutoMapping(MegatronParamMapping[torch.Tensor]):
     _MODULE_TYPE_REGISTRY: Dict[str, set] = {
         "column": {
             "ColumnParallelLinear",
+            "LinearCrossEntropyModule",
             "TEColumnParallelLinear",
             "TELayerNormColumnParallelLinear",
+            "MindSpeedTELayerNormColumnParallelLinear",
             "TEColumnParallelGroupedLinear",
+            "MindSpeedTEColumnParallelGroupedLinear",
             "VocabParallelEmbedding",
             "DotProductAttention",  # for attention sink only
             "TEDotProductAttention",  # for attention sink only
+            "MindSpeedTEDotProductAttention",
         },
         "row": {
             "RowParallelLinear",
             "TERowParallelLinear",
             "TERowParallelGroupedLinear",
+            "MindSpeedTERowParallelGroupedLinear",
         },
         "replicated": {
             # Normalization layers
@@ -1164,7 +1169,7 @@ class AutoMapping(MegatronParamMapping[torch.Tensor]):
         # Handle fused modules like TELayerNormColumnParallelLinear
         # These modules have both column-parallel weights (weight, bias)
         # and replicated layer norm weights (layer_norm_weight, layer_norm_bias)
-        if module_type == "TELayerNormColumnParallelLinear":
+        if module_type == "TELayerNormColumnParallelLinear" or module_type == "MindSpeedTELayerNormColumnParallelLinear":
             # Check the actual parameter name to determine the correct parallelism type
             if self.megatron_param and (
                 self.megatron_param.endswith("layer_norm_weight") or self.megatron_param.endswith("layer_norm_bias")
@@ -1195,7 +1200,7 @@ class AutoMapping(MegatronParamMapping[torch.Tensor]):
             return "replicated"
 
         # Check parallel_mode for TELinear
-        if module_type == "TELinear":
+        if module_type == "TELinear" or module_type == "MindSpeedTELinear":
             if module.parallel_mode == "column":
                 return "column"
             elif module.parallel_mode == "row":

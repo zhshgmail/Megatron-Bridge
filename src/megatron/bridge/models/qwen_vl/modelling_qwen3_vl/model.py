@@ -231,10 +231,18 @@ class Qwen3VLModel(MegatronModule):
 
             vision_embeds = None
             if vision_grid_thw is not None and vision_grid_thw.shape[0] > 0:
-                vision_embeds, deepstack_feature_lists = self.vision_model(
+                vision_model_output = self.vision_model(
                     hidden_states=vision_data,
                     grid_thw=vision_grid_thw,
                 )
+                if hasattr(vision_model_output, 'last_hidden_state'):
+                    # transformers 5.3
+                    vision_embeds = vision_model_output.pooler_output
+                    deepstack_feature_lists = vision_model_output.deepstack_features
+                else:
+                    # transformers 4.57
+                    vision_embeds, deepstack_feature_lists = vision_model_output
+
 
             combined_embeddings = self.language_model.embedding(
                 input_ids=input_ids,

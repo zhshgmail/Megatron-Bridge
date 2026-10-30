@@ -19,8 +19,6 @@ from dataclasses import dataclass, field
 from functools import partial
 from typing import TYPE_CHECKING, Any, Callable, Literal, Optional, Union
 
-import modelopt.torch.distill as mtd
-import modelopt.torch.distill.plugins.megatron as mtd_mcore
 import torch
 from megatron.core import parallel_state
 from megatron.core.models.gpt import GPTModel as MCoreGPTModel
@@ -338,7 +336,8 @@ class GPTDistillationProvider(GPTModelProvider):
 
         student_model = super().provide(pre_process, post_process, vp_stage)
         teacher_model = self.teacher.provide(pre_process, post_process, vp_stage)
-
+        import modelopt.torch.distill as mtd
+        import modelopt.torch.distill.plugins.megatron as mtd_mcore
         kd_cfg = mtd_mcore.setup_distillation_config(self.kd_config, student_model.config, teacher_model.config)
         modelopt_cfg = {
             "teacher_model": teacher_model,
